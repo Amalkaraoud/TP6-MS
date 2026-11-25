@@ -34,7 +34,7 @@ public class OperationController {
 
     private final OperationService operationService;
     private final CalculGrpcClient calculGrpcClient; // TP6 : gRPC (remplace OpenFeign)
-    private final HistoriqueParams params; // TP5 : proprietes historique.*
+    private final HistoriqueParams params; // proprietes historique.*
 
     public OperationController(OperationService operationService,
                                CalculGrpcClient calculGrpcClient,
@@ -62,7 +62,7 @@ public class OperationController {
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) {
                 // calcul-service a refuse la requete (division par 0...) :
-                // on transmet sa description, comme le 400 de Feign au TP4
+                // on transmet sa description, comme le 400 d'un appel REST
                 return ResponseEntity.badRequest()
                         .body(Map.of("erreur", e.getStatus().getDescription()));
             }
@@ -81,7 +81,7 @@ public class OperationController {
     // POST /operations : crée une opération
     @PostMapping
     public ResponseEntity<Object> creer(@RequestBody Operation op) {
-        // TP5 : refuse l'operation si l'historique a atteint la taille configuree
+        // refuse l'operation si l'historique a atteint la taille configuree
         if (operationService.lister().size() >= params.getMaxOperations()) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("erreur", "Historique plein : "

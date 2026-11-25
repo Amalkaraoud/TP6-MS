@@ -27,7 +27,7 @@ public class CalculGrpcService extends CalculGrpc.CalculImplBase {
         this.env = env;
     }
 
-    // Limite calcul.max-operande du depot de configuration (TP5), relue a
+    // Limite calcul.max-operande du depot de configuration, relue a
     // CHAQUE appel dans l'environnement : un POST /actuator/refresh suffit,
     // sans @RefreshScope (un proxy empecherait l'enregistrement du service gRPC)
     private void verifierLimite(int a, int b) {

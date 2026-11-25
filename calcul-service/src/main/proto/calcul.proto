@@ -10,7 +10,7 @@ option java_outer_classname = "CalculProto";
 package calcul;
 
 // Le service de calcul : une methode unaire, equivalent gRPC de
-// GET /calcul/{operateur}?a=..&b=.. (TP3, TP4)
+// GET /calcul/{operateur}?a=..&b=.. de l'API REST
 service Calcul {
   rpc Calculer (CalculRequest) returns (CalculReponse);
   // Flux serveur : une requete, N reponses (la table de multiplication de a, de 1 a b)
@@ -29,4 +29,4 @@ message CalculReponse {
   int32 b = 3;
   double resultat = 4;
   int32 port = 5; // port HTTP de l'instance qui a repondu (trace
-}                 // de la repartition de charge, comme en C.3 du TP4)
+}                 // de la repartition de charge)

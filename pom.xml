@@ -19,7 +19,7 @@
 
     <modules>
         <module>eureka-service</module>
-        <module>config-service</module> <!-- TP5, etape C.1 -->
+        <module>config-service</module>
         <module>calcul-service</module>
         <module>historique-service</module>
         <module>gateway-service</module>

@@ -12,7 +12,7 @@ import com.exemple.historique.config.HistoriqueParams;
 
 @SpringBootApplication
 @EnableFeignClients(basePackages = "com.exemple.historique.client")
-@EnableConfigurationProperties(HistoriqueParams.class) // TP5
+@EnableConfigurationProperties(HistoriqueParams.class)
 public class HistoriqueServiceApplication {
 
 	public static void main(String[] args) {

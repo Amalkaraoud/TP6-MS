@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 // Client gRPC de calcul-service : trouve les instances dans l'annuaire Eureka,
 // les sollicite a tour de role et reutilise un canal HTTP/2 par instance.
-// C'est, ecrit a la main, ce que @FeignClient + LoadBalancer faisaient au TP4.
+// C'est, ecrit a la main, ce que @FeignClient + LoadBalancer font pour un appel REST.
 @Service
 public class CalculGrpcClient {
 

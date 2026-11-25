@@ -1,12 +1,13 @@
-
 package com.exemple.historique.controller;
 
-import com.exemple.historique.client.CalculClient;
+import com.exemple.calcul.grpc.CalculReponse;
+import com.exemple.historique.client.CalculGrpcClient;
 import com.exemple.historique.config.HistoriqueParams;
 import com.exemple.historique.model.Operation;
 import com.exemple.historique.service.OperationService;
 
-import feign.FeignException;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,19 +33,20 @@ public class OperationController {
             List.of("somme", "soustraction", "produit", "division");
 
     private final OperationService operationService;
-    private final CalculClient calculClient;
+    private final CalculGrpcClient calculGrpcClient; // TP6 : gRPC (remplace OpenFeign)
     private final HistoriqueParams params; // TP5 : proprietes historique.*
 
     public OperationController(OperationService operationService,
-                               CalculClient calculClient,
+                               CalculGrpcClient calculGrpcClient,
                                HistoriqueParams params) {
         this.operationService = operationService;
-        this.calculClient = calculClient;
+        this.calculGrpcClient = calculGrpcClient;
         this.params = params;
     }
 
-    // Demande le résultat à calcul-service et le range dans l'opération.
-    // Retourne une réponse d'erreur si le calcul est impossible, null sinon.
+    // Demande le resultat a calcul-service en gRPC (instance choisie par
+    // CalculGrpcClient) et le range dans l'operation. Retourne une reponse
+    // d'erreur si le calcul est impossible, null sinon.
     private ResponseEntity<Object> calculer(Operation op) {
         if (op.getOperateur() == null || !OPERATEURS.contains(op.getOperateur())) {
             return ResponseEntity.badRequest()
@@ -52,19 +54,27 @@ public class OperationController {
         }
 
         try {
-            String corps = calculClient.calculer(
-                    op.getOperateur(), op.getA(), op.getB());
-
-            op.setResultat(Double.parseDouble(corps));
+            CalculReponse reponse = calculGrpcClient.calculer(op.getOperateur(),
+                    op.getA(), op.getB());
+            op.setResultat(reponse.getResultat()); // double, sans parseDouble
             return null;
 
-        } catch (FeignException.BadRequest e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("erreur", e.contentUTF8()));
-
-        } catch (FeignException e) {
+        } catch (StatusRuntimeException e) {
+            if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) {
+                // calcul-service a refuse la requete (division par 0...) :
+                // on transmet sa description, comme le 400 de Feign au TP4
+                return ResponseEntity.badRequest()
+                        .body(Map.of("erreur", e.getStatus().getDescription()));
+            }
+            // UNAVAILABLE, DEADLINE_EXCEEDED, UNKNOWN... : instance injoignable ou en erreur
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("erreur", "calcul-service injoignable"));
+                    .body(Map.of("erreur", "calcul-service injoignable (gRPC "
+                            + e.getStatus().getCode() + ")"));
+
+        } catch (IllegalStateException e) {
+            // Aucune instance de calcul-service dans l'annuaire
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("erreur", e.getMessage()));
         }
     }
 

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+// Une classe Java par message (sinon tout serait imbrique dans CalculProto)
+option java_multiple_files = true;
+// Paquetage Java du code genere, dans les DEUX modules
+option java_package = "com.exemple.calcul.grpc";
+option java_outer_classname = "CalculProto";
+
+// Paquetage Protobuf : nomme le service sur le reseau -> calcul.Calcul
+package calcul;
+
+// Le service de calcul : une methode unaire, equivalent gRPC de
+// GET /calcul/{operateur}?a=..&b=.. (TP3, TP4)
+service Calcul {
+  rpc Calculer (CalculRequest) returns (CalculReponse);
+}
+
+message CalculRequest {
+  string operateur = 1; // somme, soustraction, produit ou division
+  int32 a = 2;
+  int32 b = 3;
+}
+
+message CalculReponse {
+  string operateur = 1;
+  int32 a = 2;
+  int32 b = 3;
+  double resultat = 4;
+  int32 port = 5; // port HTTP de l'instance qui a repondu (trace
+}                 // de la repartition de charge, comme en C.3 du TP4)

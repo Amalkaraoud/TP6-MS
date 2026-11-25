@@ -20,6 +20,12 @@
 	<properties>
 		<java.version>17</java.version>
 		<spring-cloud.version>2025.1.2</spring-cloud.version>
+		<!-- TP6 : Spring gRPC, ligne 1.0.x = Spring Boot 4.0 -->
+		<spring-grpc.version>1.0.3</spring-grpc.version>
+		<!-- Versions de protoc et du plugin gRPC lances par Maven
+		     (les memes que celles fixees par le BOM Spring gRPC) -->
+		<protobuf.version>4.33.4</protobuf.version>
+		<grpc.version>1.77.1</grpc.version>
 	</properties>
 
 	<dependencies>
@@ -73,6 +79,12 @@
 			<scope>test</scope>
 		</dependency>
 
+
+		<!-- TP6 : client gRPC (bean GrpcChannelFactory, canaux Netty) -->
+		<dependency>
+			<groupId>org.springframework.grpc</groupId>
+			<artifactId>spring-grpc-client-spring-boot-starter</artifactId>
+		</dependency>
 	</dependencies>
 
 	<!-- Spring Cloud Dependency Management -->
@@ -82,6 +94,14 @@
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-dependencies</artifactId>
 				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<!-- TP6 : BOM Spring gRPC (versions de org.springframework.grpc, io.grpc, com.google.protobuf) -->
+			<dependency>
+				<groupId>org.springframework.grpc</groupId>
+				<artifactId>spring-grpc-dependencies</artifactId>
+				<version>${spring-grpc.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -119,6 +139,36 @@
 				</configuration>
 			</plugin>
 
+			<!-- TP6 : compile le contrat calcul.proto en classes Java a chaque build -->
+			<plugin>
+				<groupId>io.github.ascopes</groupId>
+				<artifactId>protobuf-maven-plugin</artifactId>
+				<version>4.0.3</version>
+				<configuration>
+					<!-- protoc : genere les classes des messages -->
+					<protocVersion>${protobuf.version}</protocVersion>
+					<!-- le contrat calcul.proto est dans src/main/proto (non copie dans le jar) -->
+					<sourceDirectories>
+						<sourceDirectory>${project.basedir}/src/main/proto</sourceDirectory>
+					</sourceDirectories>
+					<!-- plugin gRPC : genere la classe du service (stubs) -->
+					<binaryMavenPlugins>
+						<binaryMavenPlugin>
+							<groupId>io.grpc</groupId>
+							<artifactId>protoc-gen-grpc-java</artifactId>
+							<version>${grpc.version}</version>
+							<options>@generated=omit</options>
+						</binaryMavenPlugin>
+					</binaryMavenPlugins>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 

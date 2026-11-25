@@ -1,8 +1,9 @@
-package com.exemple.calcul.service;
+package com.exemple.calcul.rpc;
 
 import com.exemple.calcul.grpc.CalculGrpc;
 import com.exemple.calcul.grpc.CalculReponse;
 import com.exemple.calcul.grpc.CalculRequest;
+import com.exemple.calcul.service.Calculatrice;
 import io.grpc.stub.StreamObserver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -62,5 +63,24 @@ public class CalculGrpcService extends CalculGrpc.CalculImplBase {
 
         responseObserver.onNext(reponse);   // UNE reponse (appel unaire)...
         responseObserver.onCompleted();     // ... puis fin de l'appel
+    }
+
+    // E.3 - flux serveur : UNE requete, N reponses (table de multiplication de a, de 1 a b)
+    @Override
+    public void table(CalculRequest request, StreamObserver<CalculReponse> responseObserver) {
+        int a = request.getA();
+        verifierLimite(a, request.getB());
+        System.out.println("[calcul-service:" + port + "] gRPC table " + a + " x 1.." + request.getB());
+        for (int i = 1; i <= request.getB(); i++) {
+            responseObserver.onNext(CalculReponse.newBuilder()
+                    .setOperateur("produit").setA(a).setB(i)
+                    .setResultat(calculService.produit(a, i)).setPort(port).build());
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        responseObserver.onCompleted();      // N onNext, puis UN onCompleted
     }
 }

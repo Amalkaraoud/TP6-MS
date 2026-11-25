@@ -13,6 +13,8 @@ package calcul;
 // GET /calcul/{operateur}?a=..&b=.. (TP3, TP4)
 service Calcul {
   rpc Calculer (CalculRequest) returns (CalculReponse);
+  // Flux serveur : une requete, N reponses (la table de multiplication de a, de 1 a b)
+  rpc Table (CalculRequest) returns (stream CalculReponse);
 }
 
 message CalculRequest {

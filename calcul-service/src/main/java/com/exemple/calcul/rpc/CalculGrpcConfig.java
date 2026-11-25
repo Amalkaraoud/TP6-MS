@@ -1,4 +1,4 @@
-package com.exemple.calcul.service;
+package com.exemple.calcul.rpc;
 
 import io.grpc.Status;
 import org.springframework.context.annotation.Bean;

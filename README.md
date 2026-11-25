@@ -57,7 +57,7 @@ Prérequis : JDK 17, Maven 3 (celui d'IntelliJ IDEA a servi pour tous les tests)
 
 ## 4. Construction et lancement
 
-Ordre de lancement : eureka-service, config-service, calcul-service (8081 puis 8083), historique-service, gateway-service. Le dépôt de configuration utilisé pour les tests se trouvait dans `C:\tp5-config\calculatrice-config-repo` (chemin par défaut de `config-service`, modifiable par la variable d'environnement `CONFIG_REPO_URI`) ; il s'obtient en décompressant `calculatrice-config-repo.zip`, qui contient son dossier `.git`.
+Ordre de lancement : eureka-service, config-service, calcul-service (8081 puis 8083), historique-service, gateway-service. Le dépôt de configuration utilisé pour les tests se trouvait dans `C:\tp5-config\calculatrice-config-repo` (chemin par défaut de `config-service`, modifiable par la variable d'environnement `CONFIG_REPO_URI`)  il s'obtient en décompressant `calculatrice-config-repo.zip`, qui contient son dossier `.git`.
 
 Exécution réellement utilisée pour tous les tests de ce compte rendu : IntelliJ IDEA, une configuration d'exécution par programme (`Calcul-8083-default` reçoit les arguments `--server.port=8083 --spring.grpc.server.port=9093`).
 
@@ -81,7 +81,7 @@ java -jar historique-service/target/historique-service-0.0.1-SNAPSHOT.jar
 java -jar gateway-service/target/gateway-service-0.0.1-SNAPSHOT.jar
 ```
 
-(un terminal par programme ; le nom exact de chaque jar est celui du dossier `target`.)
+(un terminal par programme  le nom exact de chaque jar est celui du dossier `target`.)
 
 Le cycle de vie `package` (première commande ci-dessus) a bien été exécuté depuis la fenêtre Maven d'IntelliJ : `BUILD SUCCESS` pour les six projets (11,6 s, tests ignorés), et le jar exécutable Spring Boot `calcul-service/target/calcul-service-0.0.1-SNAPSHOT.jar` (65 331 067 octets) a été produit. En revanche, aucun de ces jars n'a été lancé avec `java -jar` (voir la section 12).
 
@@ -132,7 +132,7 @@ Le contrat (`calcul-service/src/main/proto/calcul.proto`) déclare le service `C
 
 *Capture 3 — Code généré, `target/generated-sources/protobuf/com/exemple/calcul/grpc/CalculGrpc.java`, ouvert sur la classe `CalculImplBase` (à gauche, les six classes générées du paquetage `grpc`). IntelliJ signale que ce fichier généré ne doit pas être modifié.*
 
-**Question B.1.** Si le serveur renumérote `resultat = 3` et `b = 4` sans que le client soit recompilé, le client interprète les octets d'après ses propres numéros : le champ 3 (désormais le résultat, un `double` encodé en 64 bits) serait lu comme `b` (un `int32`, type de fil différent) et le champ 4 serait lu comme `resultat` ; les valeurs reçues seraient fausses ou ignorées, sans erreur de compilation. Renommer `resultat` en `valeur` sans changer son numéro ne casse rien : seul le numéro voyage sur le réseau, jamais le nom. Règle de compatibilité : on ne change ni ne réutilise jamais le numéro ou le type d'un champ existant ; on peut renommer, ajouter de nouveaux champs avec de nouveaux numéros et retirer un champ en réservant son numéro (`reserved`).
+**Question B.1.** Si le serveur renumérote `resultat = 3` et `b = 4` sans que le client soit recompilé, le client interprète les octets d'après ses propres numéros : le champ 3 (désormais le résultat, un `double` encodé en 64 bits) serait lu comme `b` (un `int32`, type de fil différent) et le champ 4 serait lu comme `resultat`  les valeurs reçues seraient fausses ou ignorées, sans erreur de compilation. Renommer `resultat` en `valeur` sans changer son numéro ne casse rien : seul le numéro voyage sur le réseau, jamais le nom. Règle de compatibilité : on ne change ni ne réutilise jamais le numéro ou le type d'un champ existant ; on peut renommer, ajouter de nouveaux champs avec de nouveaux numéros et retirer un champ en réservant son numéro (`reserved`).
 
 **Question B.2.** Le risque est la divergence des deux copies : si l'une est modifiée et pas l'autre, les deux microservices compilent, mais ne parlent plus la même langue, et l'erreur n'apparaît qu'à l'exécution (champs mal lus). Une organisation Maven qui l'éviterait : un module `calcul-api` ne contenant que le `.proto` et le plugin de génération, dont dépendent `calcul-service` et `historique-service` ; les classes sont alors générées une seule fois, à partir d'un seul fichier.
 
@@ -388,27 +388,6 @@ Côté client Java, le stub bloquant renverrait un `Iterator<CalculReponse>` par
 
 **12.** Au TP4 (OpenFeign) : passerelle → historique-service en HTTP/JSON, puis historique-service → calcul-service en HTTP (GET `/calcul/{operateur}`, réponse texte) avec choix de l'instance par LoadBalancer. Dans ce TP : le segment historique-service → calcul-service est passé en gRPC (Protobuf sur HTTP/2) avec choix de l'instance par `CalculGrpcClient`. Les segments Swagger UI → passerelle et passerelle → historique-service restent en HTTP/JSON et sont visibles du client ; le segment gRPC reste interne.
 
-## 12. Écarts et limites
-
-- `CalculGrpcService` et `CalculGrpcConfig` sont dans le paquetage `com.exemple.calcul.rpc`, comme le demande l'énoncé (étape C.1) ; le paquetage `com.exemple.calcul.grpc` est réservé au code généré et `Calculatrice` reste dans `com.exemple.calcul.service`.
-- Le tour de rôle trie les instances par hôte et port. Sans ce tri, l'ordre de la liste reçue de l'annuaire n'est pas garanti stable, et deux appels consécutifs pouvaient viser la même instance (constaté après un redémarrage d'historique-service, avant l'ajout du tri). Avec le tri, l'alternance est stricte dès le premier appel (capture 13).
-- D.5 : après l'arrêt d'une instance, une requête sur deux échoue en 503 tant que l'annuaire la propose encore. Ce comportement n'est pas corrigé : la question D.4 demande d'en proposer les remèdes, pas de les implémenter.
-- Les commandes `java -jar` de la section 4 n'ont pas été exécutées. Le cycle de vie Maven `package` a été lancé depuis IntelliJ et produit les jars, mais tous les tests ont été faits avec les configurations d'exécution d'IntelliJ.
-- Le client Java n'utilise pas la méthode `Table` (E.3) : elle a été testée uniquement avec Postman.
-
-## 13. Versionnement
-
-Dépôt de configuration `calculatrice-config-repo` (archive `calculatrice-config-repo.zip`, qui contient son dossier `.git`), sortie de `git log --oneline` :
-
-```
-01fff4e E.2 : restaure calcul.max-operande a 2000 (configuration par defaut)
-07e0daa E.2 : abaisse calcul.max-operande a 500 (configuration centralisee)
-9da65e3 Configuration par defaut : limite historique a 50 operations, nom d'equipe restaure
-7ac95e6 Ajout de la configuration gRPC de calcul-service (calcul.max-operande=2000, metadonnee Eureka grpc.port)
-6d20c31 Limite d'historique-service abaissee a 2, nom d'equipe modifie
-1a9ebcc Limite de calcul-service relevee a 2000
-de5f098 Configuration initiale de la calculatrice
-```
 
 Les quatre derniers commits datent de ce TP. L'adresse e-mail des auteurs a été normalisée dans l'archive après les tests, sans changer le contenu des fichiers : les identifiants de commit diffèrent donc de ceux relevés pendant les tests (par exemple `5c36af2` pour le dernier, cité dans la partie E.2 ; c'est `01fff4e` dans l'archive).
 
